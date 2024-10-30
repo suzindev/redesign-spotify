@@ -33,4 +33,9 @@ export class MenuComponent implements OnInit {
   async buscarPlaylists() {
     this.playlists = await this.spotifyService.buscarPlaylistUsuario();
   }
+
+  irParaPlaylist(playlistId: string) {
+    this.menuSelecionado = playlistId;
+    this.router.navigateByUrl(`player/lista/playlist/${playlistId}`);
+  }
 }

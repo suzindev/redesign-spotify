@@ -2,10 +2,11 @@ import { Injectable } from '@angular/core';
 import { SpotifyConfiguration } from '../../environments/environment.development';
 import Spotify from 'spotify-web-api-js';
 import { IUsuario } from '../interfaces/IUsuario';
-import { SpotifyArtistaToArtista, SpotifyPlaylistToPlaylist, SpotifyUserToUsuario } from '../common/spotifyHelper';
+import { SpotifyArtistaToArtista, SpotifyPlaylistToPlaylist, SpotifySinglePlaylistToPlaylist, SpotifyTrackParaMusica, SpotifyUserToUsuario } from '../common/spotifyHelper';
 import { IPlaylist } from '../interfaces/IPlaylist';
 import { Router } from '@angular/router';
 import { IArtista } from '../interfaces/IArtista';
+import { IMusica } from '../interfaces/IMusica';
 
 @Injectable({
   providedIn: 'root'
@@ -73,10 +74,49 @@ export class SpotifyService {
     return playlists.items.map(SpotifyPlaylistToPlaylist);
   }
 
+  async buscarMusicasPlaylist(playlistId: string, offset = 0, limit = 50) {
+    const playlistSpotify = await this.spotifyApi.getPlaylist(playlistId);
+
+    if (!playlistSpotify)
+      return null;
+
+    const playlist = SpotifySinglePlaylistToPlaylist(playlistSpotify);
+    const musicasSpotify = await this.spotifyApi.getPlaylistTracks(playlistId, { offset, limit });
+
+    playlist.musicas = musicasSpotify.items.map(m => SpotifyTrackParaMusica(m.track as SpotifyApi.TrackObjectFull));
+
+    return playlist;
+  }
+
   async buscarTopArtistas(limit = 10): Promise<IArtista[]> {
     const artistas = await this.spotifyApi.getMyTopArtists({ limit });
 
     return artistas.items.map(SpotifyArtistaToArtista);
+  }
+
+  async buscarMusicas(offset = 0, limit = 50): Promise<IMusica[]> {
+    const musicas = await this.spotifyApi.getMySavedTracks({ offset, limit });
+
+    return musicas.items.map(x => SpotifyTrackParaMusica(x.track));
+  }
+
+  async executarMusica(idMusica: string) {
+    await this.spotifyApi.queue(idMusica);
+    await this.spotifyApi.skipToNext();
+  }
+
+  async obterMusicaAtual(): Promise<IMusica> {
+    const musicaSpotify = await this.spotifyApi.getMyCurrentPlayingTrack();
+
+    return SpotifyTrackParaMusica(musicaSpotify.item);
+  }
+
+  async voltarMusica() {
+    await this.spotifyApi.skipToPrevious();
+  }
+
+  async proximaMusica() {
+    await this.spotifyApi.skipToNext();
   }
 
   logout() {

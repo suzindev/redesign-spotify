@@ -1,8 +1,23 @@
 @import 'table.scss';
+@import 'variaveis.scss';
 
 :host {
   display: flex;
   justify-content: space-between;
+  max-height: 100vh;
+
+  ::-webkit-scrollbar {
+    width: 7px;
+
+    &-thumb {
+      background-color: rgba($cor-primaria, .2);
+      border-radius: 10px;
+    }
+
+    &-track {
+      background: transparent;
+    }
+  }
 
   .painel {
     height: 100vh;
